@@ -15311,6 +15311,8 @@ instruction\n\
                         ['-c', '. ' + local.__dirname + '/lib.utility2.sh; ' + element],
                         { stdio: ['ignore', 1, 2] }
                     ).on('exit', function (exitCode) {
+                        console.error('listForEachAsyncSpawn - [' + ii + ' of ' + list.length +
+                            '] exitCode ' + exitCode);
                         onParallel(exitCode && new Error(exitCode));
                     });
                 },
