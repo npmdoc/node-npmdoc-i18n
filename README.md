@@ -1,6 +1,6 @@
 # npmdoc-i18n
 
-#### api documentation for  [i18n (v0.8.3)](http://github.com/mashpie/i18n-node)  [![npm package](https://img.shields.io/npm/v/npmdoc-i18n.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-i18n) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-i18n.svg)](https://travis-ci.org/npmdoc/node-npmdoc-i18n)
+#### basic api documentation for  [i18n (v0.8.3)](http://github.com/mashpie/i18n-node)  [![npm package](https://img.shields.io/npm/v/npmdoc-i18n.svg?style=flat-square)](https://www.npmjs.org/package/npmdoc-i18n) [![travis-ci.org build-status](https://api.travis-ci.org/npmdoc/node-npmdoc-i18n.svg)](https://travis-ci.org/npmdoc/node-npmdoc-i18n)
 
 #### lightweight translation module with dynamic json storage
 
@@ -82,7 +82,8 @@
         "test": "npm run jshint && make test",
         "test-ci": "npm run jshint && istanbul cover ./node_modules/mocha/bin/_mocha"
     },
-    "version": "0.8.3"
+    "version": "0.8.3",
+    "bin": {}
 }
 ```
 
