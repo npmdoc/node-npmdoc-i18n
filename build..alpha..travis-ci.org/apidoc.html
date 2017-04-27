@@ -377,20 +377,20 @@
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
 
-```js
-i18n.configure({
-    locales:[&#x27;en&#x27;, &#x27;de&#x27;],
-    directory: __dirname + &#x27;/locales&#x27;
-});
-```
-now you are ready to use a global `i18n.<span class="apidocCodeKeywordSpan">__</span>(&#x27;Hello&#x27;)`.
+  return postProcess(f(namedValues), namedValues, args);
+};
 
-## Example usage in global scope
+i18n.__l = function i18nTranslationList(phrase) {
+  var translations = [];
+  Object.keys(locales).sort().forEach(function(l) {
+    translations.push(i18n.<span class="apidocCodeKeywordSpan">__</span>({ phrase: phrase, locale: l }));
+  });
+  return translations;
+};
 
-In your cli, when not registered to a specific object:
-
-```js
-var greeting = i18n.__(&#x27;Hello&#x27;);
+i18n.__h = function i18nTranslationHash(phrase) {
+  var translations = [];
+  Object.keys(locales).sort().forEach(function(l) {
 ...</pre></li>
     </ul>
 
@@ -855,20 +855,22 @@ now you are ready to use a global `i18n.__(&#x27;Hello&#x27;)`.
   }
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
+// called like req.getLocale()
+return this.locale || defaultLocale;
+  };
 
-```js
-getLocale(); // --&#x3e; de
-getLocale(req); // --&#x3e; de
-req.getLocale(); // --&#x3e; de
-```
+  i18n.getCatalog = function i18nGetCatalog(object, locale) {
+var targetLocale;
 
-### i18n.<span class="apidocCodeKeywordSpan">getCatalog</span>()
+// called like i18n.<span class="apidocCodeKeywordSpan">getCatalog</span>(req)
+if (typeof object === &#x27;object&#x27; &#x26;&#x26; typeof object.locale === &#x27;string&#x27; &#x26;&#x26; locale === undefined
+) {
+  targetLocale = object.locale;
+}
 
-Returns a whole catalog optionally based on current scope and locale.
-
-```js
-getCatalog(); // returns all locales
-getCatalog(&#x27;de&#x27;); // returns just &#x27;de&#x27;
+// called like i18n.getCatalog(req, &#x27;en&#x27;)
+if (!targetLocale &#x26;&#x26; typeof object === &#x27;object&#x27; &#x26;&#x26; typeof locale === &#x27;string&#x27;) {
+  targetLocale = locale;
 ...</pre></li>
     </ul>
 
@@ -892,21 +894,21 @@ getCatalog(&#x27;de&#x27;); // returns just &#x27;de&#x27;
   return this.locale || defaultLocale;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
+  i18n.setLocale = function i18nSetLocale(object, locale, skipImplicitObjects) {
 
-or disable inheritance by passing true as third parameter:
+// when given an array of objects =&#x3e; setLocale on each
+if (Array.isArray(object) &#x26;&#x26; typeof locale === &#x27;string&#x27;) {
+  for (var i = object.length - 1; i &#x3e;= 0; i--) {
+    i18n.setLocale(object[i], locale, true);
+  }
+  return i18n.<span class="apidocCodeKeywordSpan">getLocale</span>(object[0]);
+}
 
-```js
-i18n.setLocale(res, &#x27;ar&#x27;, true); // --&#x3e; req: Hallo res: مرحبا res.locals: Hallo
-```
+// defaults to called like i18n.setLocale(req, &#x27;en&#x27;)
+var targetObject = object;
+var targetLocale = locale;
 
-### i18n.<span class="apidocCodeKeywordSpan">getLocale</span>()
-
-Getting the current locale (ie.: `en`) from current scope or globally.
-
-```js
-getLocale(); // --&#x3e; de
-getLocale(req); // --&#x3e; de
-req.getLocale(); // --&#x3e; de
+// called like req.setLocale(&#x27;en&#x27;) or i18n.setLocale(&#x27;en&#x27;)
 ...</pre></li>
     </ul>
 
@@ -985,23 +987,21 @@ s];
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
 
-In case of cookie you will also need to enable cookies for your application. For express this done by adding `app.use(express.cookieParser
-())`). Now use the same cookie name when setting it in the user preferred language, like here:
+// bind api to req
+applyAPItoObject(request);
 
-```js
-res.cookie(&#x27;yourcookiename&#x27;, &#x27;de&#x27;, { maxAge: 900000, httpOnly: true });
-```
+// looks double but will ensure schema on api refactor
+i18n.setLocale(request, request.locale);
+    } else {
+return logError(&#x27;i18n.init must be called with one parameter minimum, ie. i18n.<span class="apidocCodeKeywordSpan">init</span
+>(req)&#x27;);
+    }
 
-After this and until the cookie expires, `i18n.<span class="apidocCodeKeywordSpan">init</span>()` will get the value of the cookie
- to set that language instead of default for every page.
+    if (typeof response === &#x27;object&#x27;) {
+applyAPItoObject(response);
 
-#### Some words on `register` option
-
-Esp. when used in a cli like scriptyou won&#x27;t use any `i18n.init()` to guess language settings from your user. Thus `i18n` won
-&#x27;t bind itself to any `res` or `req` object and will work like a static module.
-
-```js
-var anyObject = {};
+// and set that locale to response too
+i18n.setLocale(response, request.locale);
 ...</pre></li>
     </ul>
 
@@ -1099,22 +1099,20 @@ var anyObject = {};
   return i18n.getLocale(targetObject);
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-var anyObject = {};
+  // guess requested language/locale
+  guessLanguage(request);
 
-i18n.configure({
-  locales: [&#x27;en&#x27;, &#x27;de&#x27;],
-  register: anyObject
-});
+  // bind api to req
+  applyAPItoObject(request);
 
-anyObject.<span class="apidocCodeKeywordSpan">setLocale</span>(&#x27;de&#x27;);
-anyObject.__(&#x27;Hallo&#x27;); // --&#x3e; Hallo`
-```
+  // looks double but will ensure schema on api refactor
+  i18n.<span class="apidocCodeKeywordSpan">setLocale</span>(request, request.locale);
+} else {
+  return logError(&#x27;i18n.init must be called with one parameter minimum, ie. i18n.init(req)&#x27;);
+}
 
-Cli usage is a special use case, as we won&#x27;t need to maintain any transaction / concurrency aware setting of locale, so you
- could even choose to bind `i18n` to _global_ scope of node:
-
-```js
-i18n.configure({
+if (typeof response === &#x27;object&#x27;) {
+  applyAPItoObject(response);
 ...</pre></li>
     </ul>
 
@@ -1171,20 +1169,20 @@ i18n.configure({
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
 
-```js
-i18n.configure({
-    locales:[&#x27;en&#x27;, &#x27;de&#x27;],
-    directory: __dirname + &#x27;/locales&#x27;
-});
-```
-now you are ready to use a global `i18n.<span class="apidocCodeKeywordSpan">__</span>(&#x27;Hello&#x27;)`.
+  return postProcess(f(namedValues), namedValues, args);
+};
 
-## Example usage in global scope
+i18n.__l = function i18nTranslationList(phrase) {
+  var translations = [];
+  Object.keys(locales).sort().forEach(function(l) {
+    translations.push(i18n.<span class="apidocCodeKeywordSpan">__</span>({ phrase: phrase, locale: l }));
+  });
+  return translations;
+};
 
-In your cli, when not registered to a specific object:
-
-```js
-var greeting = i18n.__(&#x27;Hello&#x27;);
+i18n.__h = function i18nTranslationHash(phrase) {
+  var translations = [];
+  Object.keys(locales).sort().forEach(function(l) {
 ...</pre></li>
     </ul>
 
@@ -1649,20 +1647,22 @@ now you are ready to use a global `i18n.__(&#x27;Hello&#x27;)`.
   }
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
+// called like req.getLocale()
+return this.locale || defaultLocale;
+  };
 
-```js
-getLocale(); // --&#x3e; de
-getLocale(req); // --&#x3e; de
-req.getLocale(); // --&#x3e; de
-```
+  i18n.getCatalog = function i18nGetCatalog(object, locale) {
+var targetLocale;
 
-### i18n.<span class="apidocCodeKeywordSpan">getCatalog</span>()
+// called like i18n.<span class="apidocCodeKeywordSpan">getCatalog</span>(req)
+if (typeof object === &#x27;object&#x27; &#x26;&#x26; typeof object.locale === &#x27;string&#x27; &#x26;&#x26; locale === undefined
+) {
+  targetLocale = object.locale;
+}
 
-Returns a whole catalog optionally based on current scope and locale.
-
-```js
-getCatalog(); // returns all locales
-getCatalog(&#x27;de&#x27;); // returns just &#x27;de&#x27;
+// called like i18n.getCatalog(req, &#x27;en&#x27;)
+if (!targetLocale &#x26;&#x26; typeof object === &#x27;object&#x27; &#x26;&#x26; typeof locale === &#x27;string&#x27;) {
+  targetLocale = locale;
 ...</pre></li>
     </ul>
 
@@ -1686,21 +1686,21 @@ getCatalog(&#x27;de&#x27;); // returns just &#x27;de&#x27;
   return this.locale || defaultLocale;
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
+  i18n.setLocale = function i18nSetLocale(object, locale, skipImplicitObjects) {
 
-or disable inheritance by passing true as third parameter:
+// when given an array of objects =&#x3e; setLocale on each
+if (Array.isArray(object) &#x26;&#x26; typeof locale === &#x27;string&#x27;) {
+  for (var i = object.length - 1; i &#x3e;= 0; i--) {
+    i18n.setLocale(object[i], locale, true);
+  }
+  return i18n.<span class="apidocCodeKeywordSpan">getLocale</span>(object[0]);
+}
 
-```js
-i18n.setLocale(res, &#x27;ar&#x27;, true); // --&#x3e; req: Hallo res: مرحبا res.locals: Hallo
-```
+// defaults to called like i18n.setLocale(req, &#x27;en&#x27;)
+var targetObject = object;
+var targetLocale = locale;
 
-### i18n.<span class="apidocCodeKeywordSpan">getLocale</span>()
-
-Getting the current locale (ie.: `en`) from current scope or globally.
-
-```js
-getLocale(); // --&#x3e; de
-getLocale(req); // --&#x3e; de
-req.getLocale(); // --&#x3e; de
+// called like req.setLocale(&#x27;en&#x27;) or i18n.setLocale(&#x27;en&#x27;)
 ...</pre></li>
     </ul>
 
@@ -1779,23 +1779,21 @@ s];
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
 
-In case of cookie you will also need to enable cookies for your application. For express this done by adding `app.use(express.cookieParser
-())`). Now use the same cookie name when setting it in the user preferred language, like here:
+// bind api to req
+applyAPItoObject(request);
 
-```js
-res.cookie(&#x27;yourcookiename&#x27;, &#x27;de&#x27;, { maxAge: 900000, httpOnly: true });
-```
+// looks double but will ensure schema on api refactor
+i18n.setLocale(request, request.locale);
+    } else {
+return logError(&#x27;i18n.init must be called with one parameter minimum, ie. i18n.<span class="apidocCodeKeywordSpan">init</span
+>(req)&#x27;);
+    }
 
-After this and until the cookie expires, `i18n.<span class="apidocCodeKeywordSpan">init</span>()` will get the value of the cookie
- to set that language instead of default for every page.
+    if (typeof response === &#x27;object&#x27;) {
+applyAPItoObject(response);
 
-#### Some words on `register` option
-
-Esp. when used in a cli like scriptyou won&#x27;t use any `i18n.init()` to guess language settings from your user. Thus `i18n` won
-&#x27;t bind itself to any `res` or `req` object and will work like a static module.
-
-```js
-var anyObject = {};
+// and set that locale to response too
+i18n.setLocale(response, request.locale);
 ...</pre></li>
     </ul>
 
@@ -1893,22 +1891,20 @@ var anyObject = {};
   return i18n.getLocale(targetObject);
 }</pre></li>
     <li>example usage<pre class="apidocCodePre">...
-var anyObject = {};
+  // guess requested language/locale
+  guessLanguage(request);
 
-i18n.configure({
-  locales: [&#x27;en&#x27;, &#x27;de&#x27;],
-  register: anyObject
-});
+  // bind api to req
+  applyAPItoObject(request);
 
-anyObject.<span class="apidocCodeKeywordSpan">setLocale</span>(&#x27;de&#x27;);
-anyObject.__(&#x27;Hallo&#x27;); // --&#x3e; Hallo`
-```
+  // looks double but will ensure schema on api refactor
+  i18n.<span class="apidocCodeKeywordSpan">setLocale</span>(request, request.locale);
+} else {
+  return logError(&#x27;i18n.init must be called with one parameter minimum, ie. i18n.init(req)&#x27;);
+}
 
-Cli usage is a special use case, as we won&#x27;t need to maintain any transaction / concurrency aware setting of locale, so you
- could even choose to bind `i18n` to _global_ scope of node:
-
-```js
-i18n.configure({
+if (typeof response === &#x27;object&#x27;) {
+  applyAPItoObject(response);
 ...</pre></li>
     </ul>
 
